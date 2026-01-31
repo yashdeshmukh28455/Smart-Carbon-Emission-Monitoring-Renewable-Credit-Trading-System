@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+@theme {
+  /* Dark theme colors */
+  --color-dark-bg: #0a0e1a;
+  --color-dark-surface: #141824;
+  --color-dark-elevated: #1e2330;
+
+  /* Eco-green accents */
+  --color-eco-green-50: #ecfdf5;
+  --color-eco-green-100: #d1fae5;
+  --color-eco-green-200: #a7f3d0;
+  --color-eco-green-300: #6ee7b7;
+  --color-eco-green-400: #34d399;
+  --color-eco-green-500: #10b981;
+  --color-eco-green-600: #059669;
+  --color-eco-green-700: #047857;
+  --color-eco-green-800: #065f46;
+  --color-eco-green-900: #064e3b;
+
+  /* Status colors */
+  --color-status-safe: #10b981;
+  --color-status-warning: #fbbf24;
+  --color-status-exceeded: #ef4444;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-dark-bg);
+    color: rgb(243 244 246);
+  }
+}
+
+@layer components {
+
+  /* Glassmorphism card */
+  .glass-card {
+    background-color: rgb(255 255 255 / 0.05);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgb(255 255 255 / 0.1);
+    border-radius: 0.75rem;
+  }
+
+  /* Gradient button */
+  .btn-gradient {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s;
+  }
+
+  .btn-gradient:hover {
+    box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.5);
+    transform: scale(1.05);
+  }
+
+  /* Status badge */
+  .status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Input field */
+  .input-field {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: var(--color-dark-elevated);
+    border: 1px solid rgb(255 255 255 / 0.1);
+    border-radius: 0.5rem;
+    color: rgb(243 244 246);
+    transition: all 0.3s;
+  }
+
+  .input-field::placeholder {
+    color: rgb(107 114 128);
+  }
+
+  .input-field:focus {
+    outline: none;
+    border-color: var(--color-eco-green-500);
+    box-shadow: 0 0 0 3px rgb(16 185 129 / 0.2);
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    transition: all 0.3s;
+  }
+
+  .card-hover:hover {
+    transform: scale(1.05);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3);
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+  }
+
+  to {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.8);
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #141824;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #10b981;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #059669;
+}
