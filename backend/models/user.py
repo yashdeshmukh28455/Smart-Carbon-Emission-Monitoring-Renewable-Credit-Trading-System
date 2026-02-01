@@ -93,3 +93,13 @@ class User:
         """
         return (area_sqm * Config.CARBON_LIMIT_BASE_PER_SQM) + \
                (occupants * Config.CARBON_LIMIT_PER_OCCUPANT)
+
+    def increase_carbon_limit(self, user_id, amount_kg):
+        """Increase user's carbon limit by purchasing credits"""
+        from bson import ObjectId
+        
+        self.collection.update_one(
+            {'_id': ObjectId(user_id)},
+            {'$inc': {'household.annual_carbon_limit_kg': amount_kg}}
+        )
+

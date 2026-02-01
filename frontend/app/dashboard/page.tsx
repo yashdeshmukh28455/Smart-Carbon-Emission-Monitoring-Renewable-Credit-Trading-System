@@ -76,6 +76,18 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="flex items-center gap-4">
+                        <a
+                            href="/marketplace"
+                            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/50 transition-all font-semibold"
+                        >
+                            🏪 Marketplace
+                        </a>
+                        <a
+                            href="/trades"
+                            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-lg hover:shadow-lg hover:shadow-blue-500/50 transition-all font-semibold"
+                        >
+                            📊 My Trades
+                        </a>
                         <button
                             onClick={handleGenerateDemo}
                             disabled={demoLoading}

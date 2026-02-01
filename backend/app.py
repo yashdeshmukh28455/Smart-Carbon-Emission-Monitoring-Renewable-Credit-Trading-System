@@ -14,6 +14,7 @@ from routes.credits import credits_bp, init_credits
 from routes.predictions import predictions_bp, init_predictions
 from routes.demo import demo_bp, init_demo
 from routes.debug import debug_bp, init_debug
+from routes.marketplace import marketplace_bp, init_marketplace
 
 def create_app():
     """Application factory"""
@@ -60,6 +61,7 @@ def create_app():
     init_predictions(db)
     init_demo(db)
     init_debug(db)
+    init_marketplace(db)
     
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -70,6 +72,7 @@ def create_app():
     app.register_blueprint(predictions_bp, url_prefix='/api/predictions')
     app.register_blueprint(demo_bp, url_prefix='/api/demo')
     app.register_blueprint(debug_bp, url_prefix='/api/debug')
+    app.register_blueprint(marketplace_bp, url_prefix='/api/marketplace')
     
     # Health check endpoint
     @app.route('/api/health', methods=['GET'])

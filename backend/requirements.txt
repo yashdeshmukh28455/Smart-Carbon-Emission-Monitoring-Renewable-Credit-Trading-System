@@ -8,3 +8,6 @@ scikit-learn==1.4.0
 numpy==1.26.3
 pandas==2.2.0
 dnspython==2.5.0
+qrcode==7.4.2
+Pillow==10.2.0
+requests==2.31.0

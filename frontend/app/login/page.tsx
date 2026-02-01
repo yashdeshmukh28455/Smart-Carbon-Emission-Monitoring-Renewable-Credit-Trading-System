@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import Navigation from '@/components/Navigation';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -28,8 +29,11 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-radial from-dark-bg via-dark-bg to-eco-green-900/10">
-            <div className="glass-card p-8 w-full max-w-md">
+        <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-radial from-dark-bg via-dark-bg to-eco-green-900/10">
+            <div className="w-full max-w-4xl px-4 absolute top-4">
+                <Navigation />
+            </div>
+            <div className="glass-card p-8 w-full max-w-md mt-12">
                 <div className="text-center mb-8">
                     <div className="text-5xl mb-4">🌍</div>
                     <h1 className="text-3xl font-bold mb-2 text-gradient">Carbon Trading Platform</h1>

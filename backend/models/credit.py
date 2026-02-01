@@ -105,16 +105,54 @@ class Credit:
         
         return results
     
-    def expire_old_credits(self):
-        """Mark expired credits (background job)"""
-        now = datetime.utcnow()
-        
-        result = self.collection.update_many(
-            {
-                'status': 'active',
-                'expiry_date': {'$lt': now}
-            },
-            {'$set': {'status': 'expired'}}
-        )
-        
         return result.modified_count
+
+    def deduct_credits(self, user_id, amount_kg_co2):
+        """
+        Deduct credits from user (for selling)
+        
+        Args:
+            user_id: User ID
+            amount_kg_co2: Amount to deduct
+            
+        Returns:
+            True if successful, raises ValueError if insufficient
+        """
+        # Get active credits sorted by expiry (use oldest first)
+        active_credits = list(self.collection.find({
+            'user_id': ObjectId(user_id),
+            'status': 'active',
+            'expiry_date': {'$gte': datetime.utcnow()}
+        }).sort('expiry_date', 1))
+        
+        total_available = sum(c['amount_kg_co2'] for c in active_credits)
+        if total_available < amount_kg_co2:
+            raise ValueError(f'Insufficient credits. Available: {total_available}, Required: {amount_kg_co2}')
+            
+        remaining_to_deduct = amount_kg_co2
+        
+        for credit in active_credits:
+            if remaining_to_deduct <= 0:
+                break
+                
+            if credit['amount_kg_co2'] <= remaining_to_deduct:
+                # Consume entire credit
+                self.collection.update_one(
+                    {'_id': credit['_id']},
+                    {'$set': {
+                        'status': 'transferred',
+                        'transferred_at': datetime.utcnow()
+                    }}
+                )
+                remaining_to_deduct -= credit['amount_kg_co2']
+            else:
+                # Partial deduction
+                self.collection.update_one(
+                    {'_id': credit['_id']},
+                    {'$set': {
+                        'amount_kg_co2': credit['amount_kg_co2'] - remaining_to_deduct
+                    }}
+                )
+                remaining_to_deduct = 0
+                
+        return True
