@@ -99,6 +99,13 @@ def get_emission_status():
         if status['needs_credits']:
             recommendations = carbon_service.calculate_required_credits(status['excess_co2_kg'])
             status['credit_recommendations'] = recommendations
+            
+        # Add smart tips
+        status['tips'] = carbon_service.get_sustainability_tips(
+            status['status'],
+            status['electricity_co2_kg'],
+            status['combustion_co2_kg']
+        )
         
         return jsonify(status), 200
         

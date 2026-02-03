@@ -114,25 +114,38 @@ export default function DashboardPage() {
                     <div className="space-y-8">
                         {/* Status Overview */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="glass-card p-6">
-                                <h3 className="text-gray-400 text-sm mb-2">Current Status</h3>
+                            <div className="glass-card p-6 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-4 opacity-10 text-9xl font-bold">
+                                    {status.carbon_score}
+                                </div>
+                                <h3 className="text-gray-400 text-sm mb-2">Carbon Score</h3>
+                                <div className={`text-5xl font-bold mb-2 ${status.carbon_score.startsWith('A') ? 'text-eco-green-500' : status.carbon_score.startsWith('B') ? 'text-blue-400' : 'text-status-exceeded'}`}>
+                                    {status.carbon_score}
+                                </div>
                                 <StatusBadge status={status.status} percentage={status.percentage_used} />
                                 <p className="text-sm text-gray-500 mt-4">{status.status_message}</p>
                             </div>
 
                             <div className="glass-card p-6">
                                 <h3 className="text-gray-400 text-sm mb-2">Annual Carbon Limit</h3>
-                                <div className="text-3xl font-bold text-eco-green-500">{status.annual_limit_kg.toFixed(2)}</div>
+                                <div className="text-3xl font-bold text-white">{status.annual_limit_kg.toFixed(2)}</div>
                                 <p className="text-sm text-gray-500 mt-1">kg CO₂ per year</p>
-                                <div className="mt-4 text-xs text-gray-600">
+                                <div className="mt-4 text-xs text-gray-600 bg-dark-bg p-2 rounded">
                                     {user.household.area_sqm} m² • {user.household.occupants} occupants
                                 </div>
                             </div>
 
                             <div className="glass-card p-6">
                                 <h3 className="text-gray-400 text-sm mb-2">Remaining Budget</h3>
-                                <div className="text-3xl font-bold text-status-warning">{status.remaining_budget_kg.toFixed(2)}</div>
+                                <div className={`text-3xl font-bold ${status.remaining_budget_kg < 0 ? 'text-status-exceeded' : 'text-eco-green-500'}`}>
+                                    {status.remaining_budget_kg.toFixed(2)}
+                                </div>
                                 <p className="text-sm text-gray-500 mt-1">kg CO₂ remaining</p>
+                                {status.remaining_budget_kg < 0 && (
+                                    <div className="mt-2 text-xs text-status-exceeded font-bold">
+                                        Over Budget!
+                                    </div>
+                                )}
                             </div>
                         </div>
 

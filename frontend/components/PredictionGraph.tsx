@@ -19,7 +19,7 @@ export default function PredictionGraph({ annualLimit }: PredictionGraphProps) {
     const loadPredictions = async () => {
         setLoading(true);
         try {
-            const response = await predictionsAPI.getForecast(30);
+            const response = await predictionsAPI.getForecast(90); // Fetch 90 days for breach detection
             setData(response.data);
         } catch (error) {
             console.error('Failed to load predictions:', error);
@@ -59,12 +59,13 @@ export default function PredictionGraph({ annualLimit }: PredictionGraphProps) {
             <div className="flex justify-between items-start mb-4">
                 <div>
                     <h3 className="text-xl font-semibold mb-2">AI Emission Predictions</h3>
-                    <p className="text-sm text-gray-400">Linear Regression Model • Next 30 Days</p>
+                    <p className="text-sm text-gray-400">Linear Regression Model • Next 30 Days Forecast</p>
                 </div>
 
                 {data.will_exceed_limit && (
                     <div className="bg-status-exceeded/20 border-2 border-status-exceeded text-status-exceeded px-4 py-2 rounded-lg animate-pulse-slow">
-                        <span className="font-semibold">⚠ Warning: Limit Exceed Predicted</span>
+                        <span className="font-semibold block">⚠️ Limit Breach Predicted</span>
+                        <span className="text-xs">Est. Date: {data.breach_date}</span>
                     </div>
                 )}
             </div>
@@ -76,7 +77,7 @@ export default function PredictionGraph({ annualLimit }: PredictionGraphProps) {
                 </div>
                 <div className="bg-dark-elevated p-4 rounded-lg">
                     <div className="text-gray-400 text-sm">Predicted (30d)</div>
-                    <div className="text-2xl font-bold text-status-warning">{data.predicted_next_30d_kg.toFixed(2)} kg</div>
+                    <div className="text-2xl font-bold text-status-warning">+{data.predicted_next_30d_kg.toFixed(2)} kg</div>
                 </div>
                 <div className="bg-dark-elevated p-4 rounded-lg">
                     <div className="text-gray-400 text-sm">Projected Total</div>
@@ -89,8 +90,8 @@ export default function PredictionGraph({ annualLimit }: PredictionGraphProps) {
             <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e2330" />
-                    <XAxis dataKey="date" stroke="#6b7280" />
-                    <YAxis stroke="#6b7280" />
+                    <XAxis dataKey="date" stroke="#6b7280" tick={{ fontSize: 12 }} />
+                    <YAxis stroke="#6b7280" tick={{ fontSize: 12 }} />
                     <Tooltip
                         contentStyle={{
                             backgroundColor: '#141824',
@@ -98,16 +99,24 @@ export default function PredictionGraph({ annualLimit }: PredictionGraphProps) {
                             borderRadius: '8px',
                         }}
                     />
+                    <ReferenceLine y={annualLimit} label="Annual Limit" stroke="#ef4444" strokeDasharray="3 3" />
                     <Line
                         type="monotone"
                         dataKey="predicted"
-                        stroke="#10b981"
+                        stroke={data.will_exceed_limit ? '#ef4444' : '#10b981'}
                         strokeWidth={2}
-                        strokeDasharray="5 5"
-                        dot={{ fill: '#10b981', r: 4 }}
+                        dot={{ fill: data.will_exceed_limit ? '#ef4444' : '#10b981', r: 3 }}
                     />
                 </LineChart>
             </ResponsiveContainer>
+
+            {data.days_until_breach && (
+                <div className="mt-4 p-3 bg-dark-bg rounded-lg border border-gray-700 text-center">
+                    <p className="text-sm text-gray-300">
+                        At current rate, you will exceed your limit in <span className="text-status-exceeded font-bold">{data.days_until_breach} days</span>.
+                    </p>
+                </div>
+            )}
 
             <div className="mt-4 text-xs text-gray-500 text-center">
                 Predictions generated using Linear Regression • Explainable AI

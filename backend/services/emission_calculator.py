@@ -9,79 +9,71 @@ class EmissionCalculator:
     """
     
     @staticmethod
-    def calculate_electricity_co2(kwh):
+    def calculate_electricity_co2(kwh, factor=None):
         """
         Calculate CO2 emissions from electricity consumption
-        
-        Formula: kWh × emission_factor
-        Default factor: 0.85 kg CO2 per kWh (average grid emission)
-        
-        Args:
-            kwh: Electricity consumption in kilowatt-hours
-        
-        Returns:
-            CO2 emissions in kg
         """
         if kwh < 0:
             raise ValueError("Electricity consumption cannot be negative")
+            
+        used_factor = factor if factor is not None else Config.EMISSION_FACTOR_KWH
         
-        co2_kg = kwh * Config.EMISSION_FACTOR_KWH
+        co2_kg = kwh * used_factor
         return round(co2_kg, 4)
     
     @staticmethod
-    def calculate_combustion_co2(ppm):
+    def calculate_combustion_co2(ppm, factor=None):
         """
-        Calculate CO2 emissions from combustion (gas stoves, heaters, etc.)
-        
-        Conversion: ppm → mg/m³ → grams → kg
-        Formula: ppm × conversion_factor
-        
-        Args:
-            ppm: CO2 concentration in parts per million
-        
-        Returns:
-            CO2 emissions in kg
+        Calculate CO2 emissions from combustion
         """
         if ppm < 0:
             raise ValueError("PPM cannot be negative")
+            
+        used_factor = factor if factor is not None else Config.COMBUSTION_PPM_TO_KG_FACTOR
         
-        # Convert ppm to kg CO2
-        # Typical conversion: ppm × 0.0018 (assuming standard conditions)
-        co2_kg = ppm * Config.COMBUSTION_PPM_TO_KG_FACTOR
+        co2_kg = ppm * used_factor
         return round(co2_kg, 4)
     
     @staticmethod
-    def calculate_total_co2(electricity_kwh, combustion_ppm):
+    def calculate_total_co2(electricity_kwh, combustion_ppm, factors=None):
         """
         Calculate total CO2 emissions from both sources
         
         Args:
             electricity_kwh: Electricity consumption
             combustion_ppm: Combustion CO2 concentration
-        
-        Returns:
-            dict with breakdown and total
+            factors: Dict with 'electricity_kwh' and 'combustion_ppm' factors
         """
-        electricity_co2 = EmissionCalculator.calculate_electricity_co2(electricity_kwh)
-        combustion_co2 = EmissionCalculator.calculate_combustion_co2(combustion_ppm)
+        elec_factor = factors.get('electricity_kwh') if factors else None
+        comb_factor = factors.get('combustion_ppm') if factors else None
+        
+        electricity_co2 = EmissionCalculator.calculate_electricity_co2(electricity_kwh, elec_factor)
+        combustion_co2 = EmissionCalculator.calculate_combustion_co2(combustion_ppm, comb_factor)
         
         return {
             'electricity_co2_kg': electricity_co2,
             'combustion_co2_kg': combustion_co2,
-            'total_co2_kg': round(electricity_co2 + combustion_co2, 4)
+            'total_co2_kg': round(electricity_co2 + combustion_co2, 4),
+            'factors_used': {
+                'electricity': elec_factor or Config.EMISSION_FACTOR_KWH,
+                'combustion': comb_factor or Config.COMBUSTION_PPM_TO_KG_FACTOR
+            }
         }
     
     @staticmethod
-    def explain_calculation():
+    def explain_calculation(factors=None):
         """
         Return explanation of calculation methodology
-        For transparency and judge presentation
         """
+        elec_val = factors.get('electricity_kwh') if factors else Config.EMISSION_FACTOR_KWH
+        comb_val = factors.get('combustion_ppm') if factors else Config.COMBUSTION_PPM_TO_KG_FACTOR
+        source = factors.get('source', 'Default Configuration') if factors else 'System Default'
+        
         return {
             'methodology': 'Rule-Based Transparent Calculation',
-            'electricity_formula': f'CO2 (kg) = kWh × {Config.EMISSION_FACTOR_KWH}',
-            'combustion_formula': f'CO2 (kg) = ppm × {Config.COMBUSTION_PPM_TO_KG_FACTOR}',
-            'emission_factor_source': 'Average grid emission factor (configurable)',
+            'electricity_formula': f'CO2 (kg) = kWh × {elec_val}',
+            'combustion_formula': f'CO2 (kg) = ppm × {comb_val}',
+            'emission_factor_source': source,
             'why_not_ml': 'Core calculations must be transparent, auditable, and explainable. ML is used only for predictions, not calculations.',
             'scientific_basis': 'Based on standard emission factors from energy authorities'
         }

@@ -118,4 +118,5 @@ if __name__ == '__main__':
     print("🚀 Starting Smart Carbon Trading Platform API...")
     print("📡 Server running on http://localhost:5000")
     print("📚 API Documentation: http://localhost:5000")
+    # Force reload trigger
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models.emission import Emission
+from models.emission_factor import EmissionFactor
 from services.emission_calculator import EmissionCalculator
+from utils.calibration import SensorCalibration
 
 iot_bp = Blueprint('iot', __name__)
 
@@ -17,7 +19,17 @@ def receive_emission_data():
     """
     Receive emission data from IoT devices (ESP32 + sensors)
     
-    Expected payload:
+    Supports RAW sensor data OR pre-calculated values.
+    
+    Expected payload (one of):
+    1. Raw Hardware Data:
+    {
+        "raw_current_volts": 2.65,  # ACS712 output
+        "raw_co2_ppm": 450,         # MH-Z19C output
+        "duration_seconds": 300     # Measurement interval (default 300s)
+    }
+    
+    2. Direct Values (Legacy/Simulated):
     {
         "electricity_kwh": 5.2,
         "combustion_ppm": 450
@@ -27,15 +39,52 @@ def receive_emission_data():
         user_id = get_jwt_identity()
         data = request.get_json()
         
-        # Validate required fields
-        if 'electricity_kwh' not in data or 'combustion_ppm' not in data:
-            return jsonify({'error': 'electricity_kwh and combustion_ppm required'}), 400
+        electricity_kwh = 0.0
+        combustion_ppm = 0.0
         
-        electricity_kwh = float(data['electricity_kwh'])
-        combustion_ppm = float(data['combustion_ppm'])
-        
+        # --- PATH 1: Raw Sensor Data Processing ---
+        if 'raw_current_volts' in data:
+            raw_volts = float(data['raw_current_volts'])
+            duration_sec = float(data.get('duration_seconds', 300)) # Default 5 mins
+            duration_hours = duration_sec / 3600.0
+            
+            # 1. Calibrate Voltage -> Amps
+            amps = SensorCalibration.calibrate_current(raw_volts)
+            
+            # 2. Convert Amps -> Watts
+            watts = SensorCalibration.amps_to_power(amps)
+            
+            # 3. Convert Watts -> kWh
+            electricity_kwh = SensorCalibration.power_to_kwh(watts, duration_hours)
+            
+        elif 'electricity_kwh' in data:
+            # Legacy/Direct input path
+            electricity_kwh = float(data['electricity_kwh'])
+            
+        # --- PATH 2: CO2 Sensor Processing ---
+        if 'raw_co2_ppm' in data:
+            raw_ppm = float(data['raw_co2_ppm'])
+            # Calibrate PPM (baseline correction)
+            combustion_ppm = SensorCalibration.calibrate_co2_ppm(raw_ppm)
+            
+        elif 'combustion_ppm' in data:
+             # Legacy/Direct input path
+            combustion_ppm = float(data['combustion_ppm'])
+            
+        # Validate data integrity
+        if electricity_kwh < 0 or combustion_ppm < 0:
+             return jsonify({'error': 'Negative values not allowed'}), 400
+
+        # Fetch dynamic emission factors
+        factor_model = EmissionFactor(db)
+        current_factors = factor_model.get_current_factors()
+
         # Calculate CO2 emissions using rule-based calculator
-        emissions = EmissionCalculator.calculate_total_co2(electricity_kwh, combustion_ppm)
+        emissions = EmissionCalculator.calculate_total_co2(
+            electricity_kwh, 
+            combustion_ppm, 
+            factors=current_factors
+        )
         
         # Store in database
         emission_model = Emission(db)
@@ -52,6 +101,10 @@ def receive_emission_data():
             'success': True,
             'message': 'Emission data recorded',
             'emission_id': emission_id,
+            'processed_data': {
+                'electricity_kwh': electricity_kwh,
+                'combustion_ppm': combustion_ppm
+            },
             'calculated_emissions': emissions
         }), 201
         
@@ -63,4 +116,7 @@ def receive_emission_data():
 @iot_bp.route('/calculation-method', methods=['GET'])
 def get_calculation_method():
     """Get explanation of emission calculation methodology"""
+    # Create temp instance to fetch factors (no db access here in route definition, need to fix design or just use default explain)
+    # Ideally should pass db-fetched factors. For now, create a new EmissionCalculator method that doesn't need instances if possible,
+    # or just use default.
     return jsonify(EmissionCalculator.explain_calculation()), 200
