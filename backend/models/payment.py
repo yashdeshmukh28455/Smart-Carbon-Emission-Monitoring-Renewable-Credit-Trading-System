@@ -109,6 +109,16 @@ class Payment:
         
         return self.get_payment_by_id(payment_id)
     
+    def get_all_payments(self, limit=50, offset=0):
+        """
+        Get all payments (for admin)
+        """
+        payments = list(self.collection.find()
+                       .sort('created_at', -1)
+                       .skip(offset)
+                       .limit(limit))
+        return [self._format_payment(p) for p in payments]
+
     def _format_payment(self, payment):
         """Format payment for API response"""
         if not payment:

@@ -21,10 +21,27 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
+            // Try User Login first
             await login(email, password);
             router.push('/dashboard');
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Login failed');
+        } catch (userErr: any) {
+            // If User Login fails, try Admin Login
+            console.log("User login failed, trying Admin login...");
+            try {
+                // Dynamic import to avoid circular dependencies if any, though unlikely here
+                const { adminClient } = await import('@/lib/adminApi');
+                const response = await adminClient.login(email, password);
+
+                if (response.data.success) {
+                    localStorage.setItem('adminToken', response.data.access_token);
+                    router.push('/admin/dashboard');
+                } else {
+                    throw new Error('Invalid credentials');
+                }
+            } catch (adminErr: any) {
+                // If both fail, show the user error or a generic one
+                setError('Invalid credentials');
+            }
         }
         setLoading(false);
     };
